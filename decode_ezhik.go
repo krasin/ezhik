@@ -130,7 +130,7 @@ func (ls *LinearSystem) BackPropagate() {
 
 func (ls *LinearSystem) Solve(y []BitSet) (x []BitSet) {
 	if ls.Pos != ls.MaxRank {
-		panic("BackPropagate: ls.Pos != ls.MaxRank")
+		panic("Solve: ls.Pos != ls.MaxRank")
 	}
 	// TODO: complete this method
 }
