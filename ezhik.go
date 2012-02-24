@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	seed   = flag.Int64("seed", 0, "Seed for encoded block")
-	n      = flag.Int("n", 128, "Number of source blocks")
-	output = flag.String("output", "output", "Prefix for output files. The actual filenames will be like output.seed.eshik")
+	seed      = flag.Int64("seed", 0, "Seed for encoded block")
+	seedCount = flag.Int("seedCount", 1, "Number of blocks with consequentive seeds to generate")
+	n         = flag.Int("n", 128, "Number of source blocks")
+	output    = flag.String("output", "output", "Prefix for output files. The actual filenames will be like output.seed.eshik")
 )
 
 func encodeAndWriteToFile(output string, data []byte, n int, seed int64) {
@@ -53,5 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not read from stdin: %v", err)
 	}
-	encodeAndWriteToFile(*output, data, *n, *seed)
+	for i := 0; i < *seedCount; i++ {
+		encodeAndWriteToFile(*output, data, *n, *seed+int64(i))
+	}
 }
