@@ -87,6 +87,54 @@ func GetMask(n int, seed int64) (res BitSet) {
 	return
 }
 
+type LinearSystem struct {
+	Lines   []BitSet
+	Pos     int
+	MaxRank int
+}
+
+func (ls *LinearSystem) Eliminate(dst, src int) {
+	if !ls.Lines[dst].Has(src) {
+		return
+	}
+	ls.Lines[dst].XorWith(ls.Lines[src])
+}
+
+func (ls *LinearSystem) Add(line BitSet) {
+	ls.Lines = append(ls.Lines, line)
+	index := len(ls.Lines) - 1
+	for i := 0; i < ls.Pos; i++ {
+		ls.Eliminate(index, i)
+	}
+
+	if ls.Pos >= ls.MaxRank-1 || !ls.Lines[index].Has(ls.Pos) {
+		return
+	}
+	ls.Lines[ls.Pos], ls.Lines[index] = ls.Lines[index], ls.Lines[ls.Pos]
+	for i := ls.Pos + 1; i < len(ls.Lines); i++ {
+		ls.Eliminate(i, ls.Pos)
+	}
+	ls.Pos++
+}
+
+func (ls *LinearSystem) BackPropagate() {
+	if ls.Pos != ls.MaxRank {
+		panic("BackPropagate: ls.Pos != ls.MaxRank")
+	}
+	for i := ls.Pos - 1; i > 0; i-- {
+		for j := i - 1; j >= 0; j-- {
+			ls.Eliminate(j, i)
+		}
+	}
+}
+
+func (ls *LinearSystem) Solve(y []BitSet) (x []BitSet) {
+	if ls.Pos != ls.MaxRank {
+		panic("BackPropagate: ls.Pos != ls.MaxRank")
+	}
+	// TODO: complete this method
+}
+
 func main() {
 	flag.Parse()
 	filenames := os.Args[1:]
