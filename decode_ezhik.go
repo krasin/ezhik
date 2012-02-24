@@ -36,21 +36,45 @@ func checkBlocks(n int, filenames []string, blocks [][]byte) (blockLen int) {
 	return
 }
 
-type BitSet []uint64
+type bitSet struct {
+	a []uint64
+	n int
+}
+
+type BitSet interface {
+	Has(i int) bool
+	Set(i int, val bool)
+	XorWith(set BitSet)
+	Len() int
+}
 
 func NewBitSet(n int) (res BitSet) {
-	return make([]uint64, (n+63)/64)
+	return &bitSet{a: make([]uint64, (n+63)/64), n: n}
 }
 
-func (bs BitSet) Has(i int) bool {
-	return (bs[i>>6] >> uint(i&0x3F)) != 0
+func (bs *bitSet) Len() int {
+	return bs.n
 }
 
-func (bs BitSet) Set(i int, val bool) {
+func (bs *bitSet) Has(i int) bool {
+	return (bs.a[i>>6] >> uint(i&0x3F)) != 0
+}
+
+func (bs *bitSet) Set(i int, val bool) {
 	if val {
-		bs[i>>6] |= 1 << uint(i&0x3F)
+		bs.a[i>>6] |= 1 << uint(i&0x3F)
 	} else {
-		bs[i>>6] &= ^uint64(1 << uint(i&0x3F))
+		bs.a[i>>6] &= ^uint64(1 << uint(i&0x3F))
+	}
+}
+
+func (bs *bitSet) XorWith(set BitSet) {
+	if bs.Len() != set.Len() {
+		panic("XorWith: different lengths")
+	}
+	// TODO: speed up if BitSet is *bitSet
+	for i := 0; i < bs.n; i++ {
+		bs.Set(i, bs.Has(i) != set.Has(i))
 	}
 }
 
