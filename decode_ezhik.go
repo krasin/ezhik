@@ -25,7 +25,7 @@ func loadBlocks(filenames []string) (blocks [][]byte) {
 
 func checkBlocks(n int, filenames []string, blocks [][]byte) (blockLen int) {
 	if len(blocks) < n {
-		log.Fatalf("Too few blocks (%d). Want at least %d, but it's better to have a few more", n, len(blocks))
+		log.Fatalf("Too few blocks (%d). Want at least %d, but it's better to have a few more", len(blocks), n)
 	}
 	blockLen = len(blocks[0])
 	for i, block := range blocks {
