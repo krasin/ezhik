@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
+	"regexp"
+	"strconv"
 )
 
 var n = flag.Int("n", 128, "Number of source blocks in the original message")
+
+var seedRe = regexp.MustCompile(`\.([0-9]+)\.ezhik`)
 
 func loadBlocks(filenames []string) (blocks [][]byte) {
 	for _, filename := range filenames {
@@ -90,7 +95,7 @@ func GetMask(n int, seed int64) (res BitSet) {
 type LinearSystem struct {
 	n     int
 	lines []BitSet
-	y     []BitSet
+	y     [][]byte
 	pos   int
 	ready bool
 }
@@ -131,7 +136,7 @@ func (ls *LinearSystem) Promote(index int) {
 	ls.EliminateDstRange(ls.pos, len(ls.lines)-ls.pos, ls.pos-1)
 }
 
-func (ls *LinearSystem) Add(line, y BitSet) bool {
+func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
 	if ls.pos >= ls.n {
 		return true
 	}
@@ -153,9 +158,13 @@ func (ls *LinearSystem) Add(line, y BitSet) bool {
 	return ls.pos == ls.n
 }
 
+func (ls *LinearSystem) Determined() bool {
+	return ls.pos == ls.n
+}
+
 func (ls *LinearSystem) Backtrack() {
-	if ls.pos < ls.n {
-		panic("Backtrack: ls.pos < ls.n")
+	if !ls.Determined() {
+		panic("Backtrack: linear system is not determined")
 	}
 	for i := ls.n - 1; i > 0; i-- {
 		ls.EliminateDstRange(0, i-1, i)
@@ -163,27 +172,69 @@ func (ls *LinearSystem) Backtrack() {
 	ls.ready = true
 }
 
-func (ls *LinearSystem) Solve() (x []BitSet) {
+func (ls *LinearSystem) Solve() (x [][]byte) {
 	if !ls.ready {
 		panic("Solve: !ls.ready")
 	}
-	blockLen := ls.y[0].Len()
-	x = make([]BitSet, ls.n)
+	blockLen := len(ls.y[0])
+	x = make([][]byte, ls.n)
 	for i := 0; i < ls.n; i++ {
-		x[i] = NewBitSet(blockLen)
+		x[i] = make([]byte, blockLen)
 		for j := 0; j < ls.n; j++ {
 			if ls.lines[i].Has(ls.n + j) {
-				x[i].XorWith(ls.y[j])
+				XorBytes(x[i], ls.y[j])
 			}
 		}
 	}
 	return
 }
 
+func XorBytes(dst, src []byte) {
+	for i, v := range src {
+		dst[i] ^= v
+	}
+}
+
+func GetSeed(filename string) (val int64) {
+	res := seedRe.FindStringSubmatch(filename)
+	if len(res) < 2 {
+		log.Fatalf("Unable to parse filename: %s. Filenames should have the form <anything>.<numerical seed>.ezhik", filename)
+	}
+	str := res[1]
+	var err error
+	if val, err = strconv.ParseInt(str, 10, 64); err != nil {
+		log.Fatalf("Unable to parse filename: %s. Extracted seed string: %s, strconv error: %v", filename, str, err)
+	}
+	return
+}
+
+func Decode(n int, filenames []string, blocks [][]byte) (data []byte, err error) {
+	ls := &LinearSystem{n: n}
+	for i, block := range blocks {
+		seed := GetSeed(filenames[i])
+		line := GetMask(n, seed)
+		if ls.Add(line, block) {
+			// The linear system is determined now
+			break
+		}
+	}
+	if !ls.Determined() {
+		return nil, fmt.Errorf("Decode failed: the linear system is not determined")
+	}
+	ls.Backtrack()
+	xs := ls.Solve()
+	buf := new(bytes.Buffer)
+	for _, x := range xs {
+		buf.Write([]byte(x))
+	}
+	return buf.Bytes(), nil
+}
+
 func main() {
 	flag.Parse()
 	filenames := os.Args[1:]
 	blocks := loadBlocks(filenames)
-	blockLen := checkBlocks(*n, filenames, blocks)
-	fmt.Printf("Block len: %d\n", blockLen)
+	/* blockLen := */ checkBlocks(*n, filenames, blocks)
+	//	fmt.Printf("Block len: %d\n", blockLen)
+	Decode(*n, filenames, blocks)
 }
