@@ -126,7 +126,7 @@ func (ls *LinearSystem) FindOne(base, count, index int) int {
 func (ls *LinearSystem) Promote(index int) {
 	ls.lines[ls.pos], ls.lines[index] = ls.lines[index], ls.lines[ls.pos]
 	ls.y[ls.pos], ls.y[index] = ls.y[index], ls.y[ls.pos]
-	ls.lines[ls.pos].Set(ls.pos, true)
+	ls.lines[ls.pos].Set(ls.n+ls.pos, true)
 	ls.pos++
 	ls.EliminateDstRange(ls.pos, len(ls.lines)-ls.pos, ls.pos-1)
 }
@@ -172,7 +172,7 @@ func (ls *LinearSystem) Solve() (x []BitSet) {
 	for i := 0; i < ls.n; i++ {
 		x[i] = NewBitSet(blockLen)
 		for j := 0; j < ls.n; j++ {
-			if ls.lines[i].Has(j) {
+			if ls.lines[i].Has(ls.n + j) {
 				x[i].XorWith(ls.y[j])
 			}
 		}
