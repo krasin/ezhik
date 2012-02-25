@@ -87,7 +87,7 @@ func GetMask(n int, seed int64) (res BitSet) {
 	res = NewBitSet(2 * n)
 	r := rand.New(rand.NewSource(seed))
 	for i := 0; i < n; i++ {
-		res.Set(i, r.Intn(2) == 0)
+		res.Set(i, r.Intn(2) == 1)
 	}
 	return
 }

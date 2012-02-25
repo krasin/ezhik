@@ -22,7 +22,7 @@ func encodeAndWriteToFile(output string, data []byte, n int, seed int64) {
 	block := make([]byte, blockLen)
 	r := rand.New(rand.NewSource(seed))
 	for i := 0; i < n; i++ {
-		if r.Intn(2) == 0 {
+		if r.Intn(2) == 1 {
 			var cur []byte
 			if i < n-1 {
 				cur = data[i*blockLen : (i+1)*blockLen]
