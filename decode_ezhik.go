@@ -87,6 +87,99 @@ func GetMask(n int, seed int64) (res BitSet) {
 	return
 }
 
+type LinearSystem struct {
+	n     int
+	lines []BitSet
+	y     []BitSet
+	pos   int
+	ready bool
+}
+
+func (ls *LinearSystem) Eliminate(dst, src int) {
+	if !ls.lines[dst].Has(src) {
+		return
+	}
+	ls.lines[dst].XorWith(ls.lines[src])
+}
+
+func (ls *LinearSystem) EliminateSrcRange(dst, src, count int) {
+	for i := 0; i < count; i++ {
+		ls.Eliminate(dst, src+i)
+	}
+}
+
+func (ls *LinearSystem) EliminateDstRange(dst, count, src int) {
+	for i := 0; i < count; i++ {
+		ls.Eliminate(dst+i, src)
+	}
+}
+
+func (ls *LinearSystem) FindOne(base, count, index int) int {
+	for i := 0; i < count; i++ {
+		if ls.lines[base+i].Has(index) {
+			return base + i
+		}
+	}
+	return -1
+}
+
+func (ls *LinearSystem) Promote(index int) {
+	ls.lines[ls.pos], ls.lines[index] = ls.lines[index], ls.lines[ls.pos]
+	ls.y[ls.pos], ls.y[index] = ls.y[index], ls.y[ls.pos]
+	ls.lines[ls.pos].Set(ls.pos, true)
+	ls.pos++
+	ls.EliminateDstRange(ls.pos, len(ls.lines)-ls.pos, ls.pos-1)
+}
+
+func (ls *LinearSystem) Add(line, y BitSet) bool {
+	if ls.pos >= ls.n {
+		return true
+	}
+	ls.lines = append(ls.lines, line)
+	ls.y = append(ls.y, y)
+	index := len(ls.lines) - 1
+	ls.EliminateSrcRange(index, 0, ls.pos)
+	if !ls.lines[index].Has(ls.pos) {
+		return false
+	}
+	ls.Promote(index)
+	for ls.pos < ls.n {
+		i := ls.FindOne(ls.pos, len(ls.lines)-ls.pos, ls.pos)
+		if i == -1 {
+			break
+		}
+		ls.Promote(i)
+	}
+	return ls.pos == ls.n
+}
+
+func (ls *LinearSystem) Backtrack() {
+	if ls.pos < ls.n {
+		panic("Backtrack: ls.pos < ls.n")
+	}
+	for i := ls.n - 1; i > 0; i-- {
+		ls.EliminateDstRange(0, i-1, i)
+	}
+	ls.ready = true
+}
+
+func (ls *LinearSystem) Solve() (x []BitSet) {
+	if !ls.ready {
+		panic("Solve: !ls.ready")
+	}
+	blockLen := ls.y[0].Len()
+	x = make([]BitSet, ls.n)
+	for i := 0; i < ls.n; i++ {
+		x[i] = NewBitSet(blockLen)
+		for j := 0; j < ls.n; j++ {
+			if ls.lines[i].Has(j) {
+				x[i].XorWith(ls.y[j])
+			}
+		}
+	}
+	return
+}
+
 func main() {
 	flag.Parse()
 	filenames := os.Args[1:]
