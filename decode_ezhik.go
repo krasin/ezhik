@@ -62,7 +62,7 @@ func (bs *bitSet) Len() int {
 }
 
 func (bs *bitSet) Has(i int) bool {
-	return (bs.a[i>>6] >> uint(i&0x3F)) != 0
+	return bs.a[i>>6]&(1<<uint(i&0x3F)) != 0
 }
 
 func (bs *bitSet) Set(i int, val bool) {
