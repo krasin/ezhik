@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-var n = flag.Int("n", 128, "Number of source blocks in the original message")
+var n = flag.Int("n", 4 /*128*/, "Number of source blocks in the original message")
 
 var seedRe = regexp.MustCompile(`\.([0-9]+)\.ezhik`)
 
@@ -137,9 +137,9 @@ func (ls *LinearSystem) Promote(index int) {
 	ls.EliminateDstRange(ls.pos, len(ls.lines)-ls.pos, ls.pos-1)
 }
 
-func FormatSlice(line BitSet, l int) string {
+func FormatSlice(line BitSet, from, to int) string {
 	buf := new(bytes.Buffer)
-	for i := 0; i < l; i++ {
+	for i := from; i < to; i++ {
 		if i > 0 {
 			fmt.Fprintf(buf, " ")
 		}
@@ -153,7 +153,7 @@ func FormatSlice(line BitSet, l int) string {
 }
 
 func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
-	fmt.Fprintf(os.Stderr, "Add(line[0:10]: %s)\n", FormatSlice(line, 10))
+	fmt.Fprintf(os.Stderr, "Add(line[0:10]: %s)\n", FormatSlice(line, 0, 10))
 	if ls.pos >= ls.n {
 		return true
 	}
@@ -161,9 +161,9 @@ func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
 	ls.y = append(ls.y, y)
 	index := len(ls.lines) - 1
 	ls.EliminateSrcRange(index, 0, ls.pos)
-	fmt.Fprintf(os.Stderr, "Partially eliminated line[0:10]: %s\n", FormatSlice(ls.lines[index], 10))
+	fmt.Fprintf(os.Stderr, "Partially eliminated line[0:10]: %s\n", FormatSlice(ls.lines[index], 0, 10))
 	if !ls.lines[index].Has(ls.pos) {
-		fmt.Fprintf(os.Stderr, "Add does not lead to Promote. index=%d, ls.pos=%d, line[0:10]: %s\n", index, ls.pos, FormatSlice(ls.lines[index], 10))
+		fmt.Fprintf(os.Stderr, "Add does not lead to Promote. index=%d, ls.pos=%d, line[0:10]: %s\n", index, ls.pos, FormatSlice(ls.lines[index], 0, 10))
 		return false
 	}
 	ls.Promote(index)
@@ -181,13 +181,23 @@ func (ls *LinearSystem) Determined() bool {
 	return ls.pos == ls.n
 }
 
+func (ls *LinearSystem) PrintMatrix(title string) {
+	fmt.Fprintf(os.Stderr, "PrintMatrix, %s\n", title)
+	for i := 0; i < ls.n; i++ {
+		fmt.Fprintf(os.Stderr, "%s\n", FormatSlice(ls.lines[i], 0, 2*ls.n))
+	}
+	fmt.Fprintf(os.Stderr, "\n")
+}
+
 func (ls *LinearSystem) Backtrack() {
 	if !ls.Determined() {
 		panic("Backtrack: linear system is not determined")
 	}
+	ls.PrintMatrix("Before backtrack")
 	for i := ls.n - 1; i > 0; i-- {
-		ls.EliminateDstRange(0, i-1, i)
+		ls.EliminateDstRange(0, i, i)
 	}
+	ls.PrintMatrix("After backtrack")
 	ls.ready = true
 }
 
@@ -269,7 +279,7 @@ func TestLinearSystem() {
 func main() {
 	flag.Parse()
 
-	TestLinearSystem()
+	//	TestLinearSystem()
 
 	filenames := os.Args[1:]
 	blocks := loadBlocks(filenames)
