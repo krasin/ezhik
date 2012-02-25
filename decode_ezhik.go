@@ -84,7 +84,7 @@ func (bs *bitSet) XorWith(set BitSet) {
 }
 
 func GetMask(n int, seed int64) (res BitSet) {
-	res = NewBitSet(n)
+	res = NewBitSet(2 * n)
 	r := rand.New(rand.NewSource(seed))
 	for i := 0; i < n; i++ {
 		res.Set(i, r.Intn(2) == 0)
@@ -213,13 +213,14 @@ func Decode(n int, filenames []string, blocks [][]byte) (data []byte, err error)
 	for i, block := range blocks {
 		seed := GetSeed(filenames[i])
 		line := GetMask(n, seed)
+		fmt.Fprintf(os.Stderr, "Decode, i = %d\n", i)
 		if ls.Add(line, block) {
 			// The linear system is determined now
 			break
 		}
 	}
 	if !ls.Determined() {
-		return nil, fmt.Errorf("Decode failed: the linear system is not determined")
+		return nil, fmt.Errorf("Decode failed: the linear system is not determined. May be more blocks are needed")
 	}
 	ls.Backtrack()
 	xs := ls.Solve()
@@ -236,5 +237,8 @@ func main() {
 	blocks := loadBlocks(filenames)
 	/* blockLen := */ checkBlocks(*n, filenames, blocks)
 	//	fmt.Printf("Block len: %d\n", blockLen)
-	Decode(*n, filenames, blocks)
+	_, err := Decode(*n, filenames, blocks)
+	if err != nil {
+		log.Fatalf("Decode: %v", err)
+	}
 }
