@@ -172,6 +172,10 @@ func (ls *LinearSystem) Backtrack() {
 	ls.ready = true
 }
 
+func (ls *LinearSystem) Pos() int {
+	return ls.pos
+}
+
 func (ls *LinearSystem) Solve() (x [][]byte) {
 	if !ls.ready {
 		panic("Solve: !ls.ready")
@@ -220,7 +224,7 @@ func Decode(n int, filenames []string, blocks [][]byte) (data []byte, err error)
 		}
 	}
 	if !ls.Determined() {
-		return nil, fmt.Errorf("Decode failed: the linear system is not determined. May be more blocks are needed")
+		return nil, fmt.Errorf("Decode failed: the linear system is not determined. May be more blocks are needed. Pos=%d", ls.Pos())
 	}
 	ls.Backtrack()
 	xs := ls.Solve()
