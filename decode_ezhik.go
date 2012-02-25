@@ -260,8 +260,9 @@ func main() {
 	blocks := loadBlocks(filenames)
 	/* blockLen := */ checkBlocks(*n, filenames, blocks)
 	//	fmt.Printf("Block len: %d\n", blockLen)
-	_, err := Decode(*n, filenames, blocks)
+	data, err := Decode(*n, filenames, blocks)
 	if err != nil {
 		log.Fatalf("Decode: %v", err)
 	}
+	os.Stdout.Write(data)
 }
