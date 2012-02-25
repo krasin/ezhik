@@ -29,9 +29,9 @@ func loadBlocks(filenames []string) (blocks [][]byte) {
 }
 
 func checkBlocks(n int, filenames []string, blocks [][]byte) (blockLen int) {
-	if len(blocks) < n {
-		log.Fatalf("Too few blocks (%d). Want at least %d, but it's better to have a few more", len(blocks), n)
-	}
+	//	if len(blocks) < n {
+	//		log.Fatalf("Too few blocks (%d). Want at least %d, but it's better to have a few more", len(blocks), n)
+	//	}
 	blockLen = len(blocks[0])
 	for i, block := range blocks {
 		if len(block) != blockLen {
@@ -129,6 +129,7 @@ func (ls *LinearSystem) FindOne(base, count, index int) int {
 }
 
 func (ls *LinearSystem) Promote(index int) {
+	fmt.Fprintf(os.Stderr, "Promote(index=%d, pos=%d)\n", index, ls.pos)
 	ls.lines[ls.pos], ls.lines[index] = ls.lines[index], ls.lines[ls.pos]
 	ls.y[ls.pos], ls.y[index] = ls.y[index], ls.y[ls.pos]
 	ls.lines[ls.pos].Set(ls.n+ls.pos, true)
@@ -136,7 +137,23 @@ func (ls *LinearSystem) Promote(index int) {
 	ls.EliminateDstRange(ls.pos, len(ls.lines)-ls.pos, ls.pos-1)
 }
 
+func FormatSlice(line BitSet, l int) string {
+	buf := new(bytes.Buffer)
+	for i := 0; i < l; i++ {
+		if i > 0 {
+			fmt.Fprintf(buf, " ")
+		}
+		val := 0
+		if line.Has(i) {
+			val = 1
+		}
+		fmt.Fprintf(buf, "%d", val)
+	}
+	return buf.String()
+}
+
 func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
+	fmt.Fprintf(os.Stderr, "Add(line[0:10]: %s)\n", FormatSlice(line, 10))
 	if ls.pos >= ls.n {
 		return true
 	}
@@ -144,7 +161,9 @@ func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
 	ls.y = append(ls.y, y)
 	index := len(ls.lines) - 1
 	ls.EliminateSrcRange(index, 0, ls.pos)
+	fmt.Fprintf(os.Stderr, "Partially eliminated line[0:10]: %s\n", FormatSlice(ls.lines[index], 10))
 	if !ls.lines[index].Has(ls.pos) {
+		fmt.Fprintf(os.Stderr, "Add does not lead to Promote. index=%d, ls.pos=%d, line[0:10]: %s\n", index, ls.pos, FormatSlice(ls.lines[index], 10))
 		return false
 	}
 	ls.Promote(index)
