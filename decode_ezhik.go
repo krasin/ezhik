@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-var n = flag.Int("n", 4 /*128*/, "Number of source blocks in the original message")
+var n = flag.Int("n", 128, "Number of source blocks in the original message")
 
 var seedRe = regexp.MustCompile(`\.([0-9]+)\.ezhik`)
 
