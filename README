@@ -1,0 +1,24 @@
+Ezhik encoder and decoder.
+
+ezhik.go is the encoder. Given the seed, it generates the encoding block.
+
+For example,
+
+go run ezhik.go --seed=17 --output=out < input.txt
+
+generates the encoding block and stores it in out.17.ezhik:
+
+$ ls -l *.ezhik
+-rw-r--r-- 1 krasin krasin 3252 2012-02-25 22:55 out.17.ezhik
+
+We can generate many blocks at once:
+
+go run ezhik.go --seedCount=256 --output=out < input.txt
+
+decode_ezhik.go is the decoder. It takes n=128 (default value for encoder and decoder) or more encoding blocks and reconstructs the source message.
+
+Usually, 130 blocks are enough to reconstruct the message.
+
+Currently, the decoder may add trailing zero bytes. To be fixed.
+
+See http://en.wikipedia.org/wiki/Fountain_code for more details.
