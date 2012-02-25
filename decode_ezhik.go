@@ -254,8 +254,23 @@ func Decode(n int, filenames []string, blocks [][]byte) (data []byte, err error)
 	return buf.Bytes(), nil
 }
 
+func TestLinearSystem() {
+	ls := &LinearSystem{n: 3}
+	ls.Add(&bitSet{a: []uint64{5}, n: 6}, []byte{1})
+	ls.Add(&bitSet{a: []uint64{7}, n: 6}, []byte{0})
+	ls.Add(&bitSet{a: []uint64{1}, n: 6}, []byte{0})
+	fmt.Fprintf(os.Stderr, "TesLinearSystem: ls.Determined: %v\n", ls.Determined())
+	ls.Backtrack()
+	data := ls.Solve()
+	fmt.Fprintf(os.Stderr, "data: %v\n", data)
+	log.Fatalf("Test Stub")
+}
+
 func main() {
 	flag.Parse()
+
+	TestLinearSystem()
+
 	filenames := os.Args[1:]
 	blocks := loadBlocks(filenames)
 	/* blockLen := */ checkBlocks(*n, filenames, blocks)
