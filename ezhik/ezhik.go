@@ -28,7 +28,12 @@ func encodeAndWriteToFile(output string, data []byte, n int, seed int64) {
 				cur = data[i*blockLen : (i+1)*blockLen]
 			} else {
 				cur = make([]byte, blockLen)
-				copy(cur, data[i*blockLen:])
+				// In case of small files, it's possible that last few blocks have zero length
+				// For example, len(data) = 425, n = 128, blockLen = 4, 
+				// but 4 * 128 = 512.
+				if i*blockLen < len(data) {
+					copy(cur, data[i*blockLen:])
+				}
 			}
 			for i, v := range cur {
 				block[i] ^= v
@@ -47,7 +52,6 @@ func encodeAndWriteToFile(output string, data []byte, n int, seed int64) {
 		log.Fatalf("Unable to write to file: %v", err)
 	}
 }
-
 
 // This is the comment
 func main() {
