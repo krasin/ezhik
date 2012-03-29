@@ -48,6 +48,8 @@ func encodeAndWriteToFile(output string, data []byte, n int, seed int64) {
 	}
 }
 
+
+// This is the comment
 func main() {
 	flag.Parse()
 	data, err := ioutil.ReadAll(os.Stdin)
