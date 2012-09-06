@@ -95,7 +95,7 @@ func (ls *LinearSystem) FindOne(base, count, index int) int {
 }
 
 func (ls *LinearSystem) Promote(index int) {
-	fmt.Fprintf(os.Stderr, "Promote(index=%d, pos=%d)\n", index, ls.pos)
+	//	fmt.Fprintf(os.Stderr, "Promote(index=%d, pos=%d)\n", index, ls.pos)
 	ls.lines[ls.pos], ls.lines[index] = ls.lines[index], ls.lines[ls.pos]
 	ls.y[ls.pos], ls.y[index] = ls.y[index], ls.y[ls.pos]
 	ls.lines[ls.pos].Set(ls.n+ls.pos, true)
@@ -119,7 +119,7 @@ func FormatSlice(line BitSet, from, to int) string {
 }
 
 func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
-	fmt.Fprintf(os.Stderr, "Add(line[0:10]: %s)\n", FormatSlice(line, 0, 10))
+	//	fmt.Fprintf(os.Stderr, "Add(line[0:10]: %s)\n", FormatSlice(line, 0, 10))
 	if ls.pos >= ls.n {
 		return true
 	}
@@ -127,9 +127,9 @@ func (ls *LinearSystem) Add(line BitSet, y []byte) bool {
 	ls.y = append(ls.y, y)
 	index := len(ls.lines) - 1
 	ls.EliminateSrcRange(index, 0, ls.pos)
-	fmt.Fprintf(os.Stderr, "Partially eliminated line[0:10]: %s\n", FormatSlice(ls.lines[index], 0, 10))
+	//	fmt.Fprintf(os.Stderr, "Partially eliminated line[0:10]: %s\n", FormatSlice(ls.lines[index], 0, 10))
 	if !ls.lines[index].Has(ls.pos) {
-		fmt.Fprintf(os.Stderr, "Add does not lead to Promote. index=%d, ls.pos=%d, line[0:10]: %s\n", index, ls.pos, FormatSlice(ls.lines[index], 0, 10))
+		//		fmt.Fprintf(os.Stderr, "Add does not lead to Promote. index=%d, ls.pos=%d, line[0:10]: %s\n", index, ls.pos, FormatSlice(ls.lines[index], 0, 10))
 		return false
 	}
 	ls.Promote(index)
@@ -159,11 +159,11 @@ func (ls *LinearSystem) Backtrack() {
 	if !ls.Determined() {
 		panic("Backtrack: linear system is not determined")
 	}
-	ls.PrintMatrix("Before backtrack")
+	//	ls.PrintMatrix("Before backtrack")
 	for i := ls.n - 1; i > 0; i-- {
 		ls.EliminateDstRange(0, i, i)
 	}
-	ls.PrintMatrix("After backtrack")
+	//	ls.PrintMatrix("After backtrack")
 	ls.ready = true
 }
 
@@ -199,7 +199,7 @@ func Decode(n int, seeds []int64, blocks [][]byte) (data []byte, err error) {
 	for i, block := range blocks {
 		seed := seeds[i]
 		line := GetMask(n, seed)
-		fmt.Fprintf(os.Stderr, "Decode, i = %d\n", i)
+		//		fmt.Fprintf(os.Stderr, "Decode, i = %d\n", i)
 		if ls.Add(line, block) {
 			// The linear system is determined now
 			break
